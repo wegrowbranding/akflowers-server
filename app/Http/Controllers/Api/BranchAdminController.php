@@ -14,7 +14,7 @@ class BranchAdminController extends BaseController
         $limit = $request->get('limit', 10);
         $search = $request->get('search_term');
 
-        $query = BranchAdmin::where('deleted', 0);
+        $query = BranchAdmin::with('branch')->where('deleted', 0);
 
         if ($search) {
             $query->where(function($q) use ($search) {
@@ -41,7 +41,7 @@ class BranchAdminController extends BaseController
         $validator = Validator::make($input, [
             'branch_id' => 'required|integer|exists:branches,id',
             'username' => 'required|string|max:100|unique:branch_admin,username',
-            'password_hash' => 'required|string',
+            'password' => 'required|string|min:6',
             'full_name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:branch_admin,email',
             'phone' => 'required|string|max:20|regex:/^[0-9+\-\s()]+$/',
@@ -52,6 +52,9 @@ class BranchAdminController extends BaseController
         if ($validator->fails()) {
             return $this->sendError($validator->errors()->first(), $validator->errors()->toArray(), 400);
         }
+
+        $input['password_hash'] = \Illuminate\Support\Facades\Hash::make($request->password);
+        unset($input['password']);
 
         $admin = BranchAdmin::create($input);
 
@@ -71,7 +74,7 @@ class BranchAdminController extends BaseController
         $validator = Validator::make($input, [
             'branch_id' => 'integer|exists:branches,id',
             'username' => 'string|max:100|unique:branch_admin,username,' . $admin->id,
-            'password_hash' => 'string',
+            'password' => 'nullable|string|min:6',
             'full_name' => 'string|max:255',
             'email' => 'email|max:255|unique:branch_admin,email,' . $admin->id,
             'phone' => 'string|max:20|regex:/^[0-9+\-\s()]+$/',
@@ -80,6 +83,15 @@ class BranchAdminController extends BaseController
 
         if ($validator->fails()) {
             return $this->sendError($validator->errors()->first(), $validator->errors()->toArray(), 400);
+        }
+
+        if (!empty($request->password)) {
+            $input['password_hash'] = \Illuminate\Support\Facades\Hash::make($request->password);
+        }
+        unset($input['password']);
+        // Ensure we don't accidentally update password_hash if it was passed by mistake from old frontend
+        if (empty($request->password) && array_key_exists('password_hash', $input)) {
+            unset($input['password_hash']);
         }
 
         $admin->update($input);

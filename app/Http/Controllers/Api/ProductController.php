@@ -20,7 +20,7 @@ class ProductController extends BaseController
         $limit = $request->get('limit', 10);
         $search = $request->get('search_term');
 
-        $query = Product::with('category')->where('deleted', 0);
+        $query = Product::with(['category', 'media'])->where('deleted', 0);
 
         if ($search) {
             $query->where(function($q) use ($search) {
@@ -67,6 +67,19 @@ class ProductController extends BaseController
 
         $product = Product::create($input);
 
+        // Handle media attachments
+        if ($request->has('media_ids') && is_array($request->media_ids)) {
+            $primaryId = $request->get('primary_media_id');
+            foreach ($request->media_ids as $mediaId) {
+                \App\Models\ProductImage::create([
+                    'product_id' => $product->id,
+                    'media_id' => $mediaId,
+                    'is_primary' => ($primaryId == $mediaId) ? 1 : 0
+                ]);
+            }
+        }
+        $product->load('media');
+
         return $this->sendResponse($product, 'Product created successfully.');
     }
 
@@ -102,6 +115,20 @@ class ProductController extends BaseController
         }
 
         $product->update($input);
+
+        // Handle media attachments updates
+        if ($request->has('media_ids') && is_array($request->media_ids)) {
+            \App\Models\ProductImage::where('product_id', $product->id)->delete();
+            $primaryId = $request->get('primary_media_id');
+            foreach ($request->media_ids as $mediaId) {
+                \App\Models\ProductImage::create([
+                    'product_id' => $product->id,
+                    'media_id' => $mediaId,
+                    'is_primary' => ($primaryId == $mediaId) ? 1 : 0
+                ]);
+            }
+        }
+        $product->load('media');
 
         return $this->sendResponse($product, 'Product updated successfully.');
     }

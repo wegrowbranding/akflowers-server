@@ -3,11 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
 
-class BranchStaffUser extends Model
+class BranchStaffUser extends Authenticatable implements JWTSubject
 {
-    use HasFactory;
+    use HasFactory, Notifiable;
 
     protected $table = 'branch_staff_users';
 
@@ -37,4 +39,31 @@ class BranchStaffUser extends Model
     protected $hidden = [
         'password_hash',
     ];
+
+    public function getAuthPassword()
+    {
+        return $this->password_hash;
+    }
+
+    public function getJWTIdentifier()
+    {
+        return $this->getKey();
+    }
+
+    public function getJWTCustomClaims()
+    {
+        return [
+            'user_type' => 'branch_staff' // I'll also add a relation later if needed
+        ];
+    }
+
+    public function role()
+    {
+        return $this->belongsTo(BranchRole::class, 'role_id');
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class, 'branch_id');
+    }
 }

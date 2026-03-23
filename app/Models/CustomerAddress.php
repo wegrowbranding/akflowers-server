@@ -25,4 +25,9 @@ class CustomerAddress extends Model
     ];
 
     const UPDATED_AT = null;
+
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class, 'customer_id');
+    }
 }

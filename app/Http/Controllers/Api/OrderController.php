@@ -14,7 +14,7 @@ class OrderController extends BaseController
         $limit = $request->get('limit', 10);
         $search = $request->get('search_term');
         
-        $query = Order::with('items');
+        $query = Order::with(['items', 'customer']);
 
         if ($search) {
             $query->where('order_number', 'LIKE', "%{$search}%");

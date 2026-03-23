@@ -16,7 +16,7 @@ class BranchRoleController extends BaseController
         $limit = $request->get('limit', 10);
         $search = $request->get('search_term');
 
-        $query = BranchRole::with('permission')->where('deleted', 0);
+        $query = BranchRole::with(['permission', 'branch'])->where('deleted', 0);
 
         if ($search) {
             $query->where(function($q) use ($search) {

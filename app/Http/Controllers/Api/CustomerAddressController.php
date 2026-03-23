@@ -14,7 +14,7 @@ class CustomerAddressController extends BaseController
         $limit = $request->get('limit', 10);
         $search = $request->get('search_term');
         
-        $query = CustomerAddress::query();
+        $query = CustomerAddress::with('customer');
 
         if ($search) {
             $query->where(function($q) use ($search) {

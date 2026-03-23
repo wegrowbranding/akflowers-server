@@ -6,6 +6,7 @@ use App\Models\BranchStaffUser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Hash;
 
 class BranchStaffUserController extends BaseController
 {
@@ -14,7 +15,7 @@ class BranchStaffUserController extends BaseController
         $limit = $request->get('limit', 10);
         $search = $request->get('search_term');
 
-        $query = BranchStaffUser::where('deleted', 0);
+        $query = BranchStaffUser::with(['branch', 'role'])->where('deleted', 0);
 
         if ($search) {
             $query->where(function($q) use ($search) {
@@ -42,7 +43,7 @@ class BranchStaffUserController extends BaseController
             'branch_id' => 'required|integer|exists:branches,id',
             'username' => 'required|string|max:100|unique:branch_staff_users,username',
             'email' => 'required|email|max:255|unique:branch_staff_users,email',
-            'password_hash' => 'required|string',
+            'password' => 'required|string|min:6',
             'full_name' => 'required|string|max:255',
             'phone' => 'required|string|max:20|regex:/^[0-9+\-\s()]+$/',
             'role_id' => 'required|integer|exists:branch_roles,id',
@@ -57,6 +58,9 @@ class BranchStaffUserController extends BaseController
         if ($validator->fails()) {
             return $this->sendError($validator->errors()->first(), $validator->errors()->toArray(), 400);
         }
+
+        $input['password_hash'] = Hash::make($request->password);
+        unset($input['password']);
 
         $user = BranchStaffUser::create($input);
 
@@ -77,7 +81,7 @@ class BranchStaffUserController extends BaseController
             'branch_id' => 'integer|exists:branches,id',
             'username' => 'string|max:100|unique:branch_staff_users,username,' . $user->id,
             'email' => 'email|max:255|unique:branch_staff_users,email,' . $user->id,
-            'password_hash' => 'string',
+            'password' => 'nullable|string|min:6',
             'full_name' => 'string|max:255',
             'phone' => 'string|max:20|regex:/^[0-9+\-\s()]+$/',
             'role_id' => 'integer|exists:branch_roles,id',
@@ -87,6 +91,16 @@ class BranchStaffUserController extends BaseController
             'address' => 'nullable|string',
             'status' => 'in:active,inactive,suspended,resigned'
         ]);
+
+        if (!empty($request->password)) {
+            $input['password_hash'] = Hash::make($request->password);
+        }
+        unset($input['password']);
+
+        // Prevent accidental downgrade to plaintext password if passed
+        if (empty($request->password) && array_key_exists('password_hash', $input)) {
+            unset($input['password_hash']);
+        }
 
         if ($validator->fails()) {
             return $this->sendError($validator->errors()->first(), $validator->errors()->toArray(), 400);

@@ -66,13 +66,51 @@ class AuthController extends BaseController
 
         $credentials = $request->only(['email', 'username', 'password']);
         
-        // JWTAuth usually looks for 'password' field, but we have 'password_hash'
-        // We'll manualy authenticate
-        $user = SuperAdminUser::where('email', $request->email)
+        $user = null;
+        $userType = '';
+        $accessPages = []; // If empty array or specific string, means all access.
+
+        // 1. Check SuperAdminUser
+        $superAdmin = SuperAdminUser::where('email', $request->email)
                 ->orWhere('username', $request->username)
                 ->first();
 
-        if (!$user || !Hash::check($request->password, $user->password_hash)) {
+        if ($superAdmin && Hash::check($request->password, $superAdmin->password_hash)) {
+            $user = $superAdmin;
+            $userType = 'super_admin';
+            $accessPages = ['*']; 
+        }
+
+        // 2. Check BranchAdmin
+        if (!$user) {
+            $branchAdmin = \App\Models\BranchAdmin::where('email', $request->email)
+                    ->orWhere('username', $request->username)
+                    ->first();
+            if ($branchAdmin && Hash::check($request->password, $branchAdmin->password_hash)) {
+                $user = $branchAdmin;
+                $userType = 'branch_admin';
+                $accessPages = ['*'];
+            }
+        }
+
+        // 3. Check BranchStaffUser
+        if (!$user) {
+            $branchStaff = \App\Models\BranchStaffUser::with('role.permission')->where('email', $request->email)
+                    ->orWhere('username', $request->username)
+                    ->first();
+            if ($branchStaff && Hash::check($request->password, $branchStaff->password_hash)) {
+                $user = $branchStaff;
+                $userType = 'branch_staff';
+                
+                // parse permissions string
+                $moduleString = $user->role->permission->module ?? '';
+                if ($moduleString) {
+                    $accessPages = array_map('trim', explode(',', $moduleString));
+                }
+            }
+        }
+
+        if (!$user) {
             return $this->sendError('Unauthorized.', ['error' => 'Invalid credentials'], 401);
         }
 
@@ -80,7 +118,7 @@ class AuthController extends BaseController
 
         // Save session in sessions table
         UserSession::create([
-            'user_type' => 'super_admin',
+            'user_type' => $userType,
             'user_id' => $user->id,
             'session_token' => $token,
             'ip_address' => $request->ip(),
@@ -95,9 +133,13 @@ class AuthController extends BaseController
             'last_login_ip' => $request->ip()
         ]);
 
+        $userData = $user->toArray();
+        $userData['user_type'] = $userType;
+        $userData['access_pages'] = $accessPages;
+
         return $this->sendResponse([
             'token' => $token,
-            'user' => $user
+            'user' => $userData
         ], 'User logged in successfully.');
     }
 

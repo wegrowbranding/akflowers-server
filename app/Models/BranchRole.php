@@ -26,4 +26,9 @@ class BranchRole extends Model
     {
         return $this->belongsTo(Permission::class, 'permission_id');
     }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class, 'branch_id');
+    }
 }

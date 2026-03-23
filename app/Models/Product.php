@@ -31,4 +31,15 @@ class Product extends Model
     {
         return $this->belongsTo(Category::class);
     }
+
+    public function images()
+    {
+        return $this->hasMany(ProductImage::class, 'product_id');
+    }
+
+    public function media()   
+    {
+        return $this->belongsToMany(Media::class, 'product_images', 'product_id', 'media_id')
+                    ->withPivot('id', 'is_primary');
+    }
 }

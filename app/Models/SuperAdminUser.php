@@ -57,6 +57,8 @@ class SuperAdminUser extends Authenticatable implements JWTSubject
      */
     public function getJWTCustomClaims()
     {
-        return [];
+        return [
+            'user_type' => 'super_admin'
+        ];
     }
 }
