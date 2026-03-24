@@ -5,19 +5,22 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class WishlistItem extends Model
+class CustomerRecentView extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'wishlist_id',
+        'customer_id',
         'product_id',
     ];
-
-    public $timestamps = false;
 
     public function product()
     {
         return $this->belongsTo(Product::class, 'product_id');
+    }
+
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class, 'customer_id');
     }
 }

@@ -20,6 +20,7 @@ use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\WishlistController;
+
 Route::prefix('v1')->group(function () {
     Route::get('/status', [StatusController::class, 'index']);
     Route::get('/health', [StatusController::class, 'health']);
@@ -197,5 +198,74 @@ Route::prefix('v1')->group(function () {
 
     Route::middleware('auth.jwt')->get('/user', function (Request $request) {
         return $request->user();
+    });
+});
+
+Route::prefix('v1/customer-app')->group(function () {
+    // Auth Routes
+    Route::post('/login', [\App\Http\Controllers\Api\CustomerApp\AuthController::class, 'login']);
+    Route::post('/register', [\App\Http\Controllers\Api\CustomerApp\AuthController::class, 'register']);
+
+    // Home Dashboard Route
+    Route::get('/home/dashboard', [\App\Http\Controllers\Api\CustomerApp\HomeController::class, 'dashboard']);
+
+    // Product Listing, Search, Filters & Sorting
+    Route::get('/products', [\App\Http\Controllers\Api\CustomerApp\ProductController::class, 'list']);
+    
+    // Product Details
+    Route::get('/products/{id}', [\App\Http\Controllers\Api\CustomerApp\ProductController::class, 'details']);
+    
+    // View Product Reviews (Public)
+    Route::get('/products/{id}/reviews', [\App\Http\Controllers\Api\CustomerApp\ReviewController::class, 'viewReviews']);
+
+    // Support Meta
+    Route::get('/support-meta/{meta_key}', [\App\Http\Controllers\Api\CustomerApp\SupportMetaController::class, 'getMeta']);
+
+    // Protected Customer Routes
+    Route::middleware('auth.customer')->group(function () {
+        // Cart Routes
+        Route::get('/cart', [\App\Http\Controllers\Api\CustomerApp\CartController::class, 'getCart']);
+        Route::post('/cart/update', [\App\Http\Controllers\Api\CustomerApp\CartController::class, 'updateCart']);
+
+        // Profile
+        Route::get('/profile', [\App\Http\Controllers\Api\CustomerApp\ProfileController::class, 'getProfile']);
+        Route::put('/profile', [\App\Http\Controllers\Api\CustomerApp\ProfileController::class, 'editProfile']);
+
+        // Addresses
+        Route::get('/addresses', [\App\Http\Controllers\Api\CustomerApp\AddressController::class, 'getAddresses']);
+        Route::post('/addresses/add', [\App\Http\Controllers\Api\CustomerApp\AddressController::class, 'addAddress']);
+        Route::put('/addresses/{id}', [\App\Http\Controllers\Api\CustomerApp\AddressController::class, 'updateAddress']);
+        Route::delete('/addresses/{id}', [\App\Http\Controllers\Api\CustomerApp\AddressController::class, 'deleteAddress']);
+
+        // Checkout & Coupon
+        Route::post('/checkout/apply-coupon', [\App\Http\Controllers\Api\CustomerApp\CheckoutController::class, 'applyCoupon']);
+        Route::post('/checkout/place-order', [\App\Http\Controllers\Api\CustomerApp\CheckoutController::class, 'placeOrder']);
+
+        // Orders
+        Route::get('/orders', [\App\Http\Controllers\Api\CustomerApp\OrderController::class, 'list']);
+        Route::get('/orders/{id}', [\App\Http\Controllers\Api\CustomerApp\OrderController::class, 'details']);
+
+        // Wishlist
+        Route::get('/wishlist', [\App\Http\Controllers\Api\CustomerApp\WishlistController::class, 'getWishlist']);
+        Route::post('/wishlist/update', [\App\Http\Controllers\Api\CustomerApp\WishlistController::class, 'updateWishlist']);
+
+        // Recently Viewed
+        Route::get('/recently-viewed', [\App\Http\Controllers\Api\CustomerApp\RecentlyViewedController::class, 'list']);
+        Route::post('/recently-viewed/add/{id}', [\App\Http\Controllers\Api\CustomerApp\RecentlyViewedController::class, 'add']);
+
+        // Add Review
+        Route::post('/reviews/add', [\App\Http\Controllers\Api\CustomerApp\ReviewController::class, 'addReview']);
+
+        // Devices
+        Route::post('/devices/add', [\App\Http\Controllers\Api\CustomerApp\DeviceController::class, 'add']);
+        Route::post('/devices/logout', [\App\Http\Controllers\Api\CustomerApp\DeviceController::class, 'logout']);
+        Route::post('/devices/update-last-active', [\App\Http\Controllers\Api\CustomerApp\DeviceController::class, 'updateLastActive']);
+        Route::get('/devices/fcm-tokens', [\App\Http\Controllers\Api\CustomerApp\DeviceController::class, 'getAvailableFcmTokens']);
+
+        // Notifications
+        Route::get('/notifications', [\App\Http\Controllers\Api\CustomerApp\NotificationController::class, 'list']);
+        Route::post('/notifications/add', [\App\Http\Controllers\Api\CustomerApp\NotificationController::class, 'add']);
+        Route::post('/notifications/mark-read', [\App\Http\Controllers\Api\CustomerApp\NotificationController::class, 'markRead']);
+        Route::get('/notifications/unread-count', [\App\Http\Controllers\Api\CustomerApp\NotificationController::class, 'unreadCount']);
     });
 });

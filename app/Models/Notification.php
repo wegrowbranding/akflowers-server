@@ -5,26 +5,25 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Review extends Model
+class Notification extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'product_id',
-        'customer_id',
-        'rating',
-        'review',
-    ];
+    protected $table = 'notifications';
 
-    const UPDATED_AT = null;
+    protected $fillable = [
+        'customer_id',
+        'title',
+        'message',
+        'type',
+        'reference_id',
+        'image_url',
+        'is_read',
+        'read_at',
+    ];
 
     public function customer()
     {
         return $this->belongsTo(Customer::class, 'customer_id');
-    }
-
-    public function product()
-    {
-        return $this->belongsTo(Product::class, 'product_id');
     }
 }

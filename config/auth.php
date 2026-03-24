@@ -47,6 +47,11 @@ return [
             'driver' => 'jwt',
             'provider' => 'super_admins',
         ],
+
+        'customer_api' => [
+            'driver' => 'jwt',
+            'provider' => 'customers',
+        ],
     ],
 
     'providers' => [
@@ -58,6 +63,11 @@ return [
         'super_admins' => [
             'driver' => 'eloquent',
             'model' => \App\Models\SuperAdminUser::class,
+        ],
+
+        'customers' => [
+            'driver' => 'eloquent',
+            'model' => \App\Models\Customer::class,
         ],
     ],
 

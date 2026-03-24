@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'auth.jwt' => \PHPOpenSourceSaver\JWTAuth\Http\Middleware\Authenticate::class,
+            'auth.customer' => \App\Http\Middleware\CustomerAuthMiddleware::class,
         ]);
         $middleware->append(\App\Http\Middleware\ForceJsonResponse::class);
         $middleware->append(\App\Http\Middleware\ApiLogger::class);
