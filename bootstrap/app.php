@@ -31,6 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
             return response()->json([
                 'success' => false,
                 'message' => 'Token has expired',
+                'valid_token' => false
             ], 401);
         });
 
@@ -38,6 +39,7 @@ return Application::configure(basePath: dirname(__DIR__))
             return response()->json([
                 'success' => false,
                 'message' => 'Token is invalid',
+                'valid_token' => false
             ], 401);
         });
 
@@ -45,27 +47,28 @@ return Application::configure(basePath: dirname(__DIR__))
             return response()->json([
                 'success' => false,
                 'message' => 'Token has been blacklisted',
+                'valid_token' => false
             ], 401);
         });
 
         $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException $e) {
             $prev = $e->getPrevious();
             if ($prev instanceof \PHPOpenSourceSaver\JWTAuth\Exceptions\TokenExpiredException) {
-                return response()->json(['success' => false, 'message' => 'Token has expired'], 401);
+                return response()->json(['success' => false, 'message' => 'Token has expired', 'valid_token' => false], 401);
             }
             if ($prev instanceof \PHPOpenSourceSaver\JWTAuth\Exceptions\TokenInvalidException) {
-                return response()->json(['success' => false, 'message' => 'Token is invalid'], 401);
+                return response()->json(['success' => false, 'message' => 'Token is invalid', 'valid_token' => false], 401);
             }
             if ($prev instanceof \PHPOpenSourceSaver\JWTAuth\Exceptions\TokenBlacklistedException) {
-                return response()->json(['success' => false, 'message' => 'Token has been blacklisted'], 401);
+                return response()->json(['success' => false, 'message' => 'Token has been blacklisted', 'valid_token' => false], 401);
             }
             
             // Check message for "not provided" or other cases
             $message = $e->getMessage();
             if (str_contains(strtolower($message), 'not provided')) {
-                return response()->json(['success' => false, 'message' => 'Token not provided'], 401);
+                return response()->json(['success' => false, 'message' => 'Token not provided', 'valid_token' => false], 401);
             }
 
-            return response()->json(['success' => false, 'message' => 'Unauthorized access'], 401);
+            return response()->json(['success' => false, 'message' => 'Unauthorized access', 'valid_token' => false], 401);
         });
     })->create();

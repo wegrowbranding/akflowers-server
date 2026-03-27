@@ -6,6 +6,7 @@ use App\Models\Order;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use App\Services\NotificationService;
 
 class OrderController extends BaseController
 {
@@ -99,6 +100,17 @@ class OrderController extends BaseController
         }
 
         $order->update($input);
+
+        // Check for order status update
+        if (isset($input['order_status'])) {
+            NotificationService::sendToCustomer(
+                $order->customer_id,
+                'Order Status Updated! 📦',
+                "Your order #{$order->order_number} status is now " . ucfirst($order->order_status) . ".",
+                'order_status_update',
+                $order->id
+            );
+        }
 
         if (isset($input['products']) && is_array($input['products'])) {
             $order->items()->delete();

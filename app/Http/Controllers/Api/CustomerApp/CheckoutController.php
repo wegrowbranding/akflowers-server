@@ -17,6 +17,10 @@ use Illuminate\Support\Facades\Validator;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
+use App\Mail\OrderPlacedCustomerMail;
+use App\Mail\OrderPlacedAdminMail;
+use App\Helpers\MailHelper;
+use App\Services\NotificationService;
 
 class CheckoutController extends BaseController
 {
@@ -213,6 +217,31 @@ class CheckoutController extends BaseController
             }
 
             DB::commit();
+
+            // get items again (or reuse $cartItems)
+            $orderItems = OrderItem::with('product')->where('order_id', $order->id)->get();
+
+            // Load customer relation
+            $order->load('customer');
+
+            // Customer email
+            MailHelper::send($customer->email, new OrderPlacedCustomerMail($order, $orderItems));
+
+            // Admin emails
+            $adminEmails = explode(',', env('ADMIN_EMAILS'));
+
+            foreach ($adminEmails as $email) {
+                MailHelper::send(trim($email), new OrderPlacedAdminMail($order, $orderItems));
+            }
+
+            // Real-time notification
+            NotificationService::sendToCustomer(
+                $customer->id,
+                'Order Placed successfully! 🛒',
+                "Your order {$order->order_number} has been placed. We are processing it.",
+                'order_placed',
+                $order->id
+            );
 
             return $this->sendResponse($order, 'Order placed successfully.');
 

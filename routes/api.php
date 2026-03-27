@@ -199,12 +199,17 @@ Route::prefix('v1')->group(function () {
     Route::middleware('auth.jwt')->get('/user', function (Request $request) {
         return $request->user();
     });
+
+    // Admin - Notifications
+    Route::post('admin/send-custom-notification', [\App\Http\Controllers\Api\NotificationController::class, 'sendCustomNotification']);
 });
 
 Route::prefix('v1/customer-app')->group(function () {
     // Auth Routes
     Route::post('/login', [\App\Http\Controllers\Api\CustomerApp\AuthController::class, 'login']);
     Route::post('/register', [\App\Http\Controllers\Api\CustomerApp\AuthController::class, 'register']);
+    Route::post('/check-customer-email-exists', [\App\Http\Controllers\Api\CustomerApp\AuthController::class, 'checkCustomerEmailExists']);
+    Route::post('/change-password', [\App\Http\Controllers\Api\CustomerApp\AuthController::class, 'changePassword']);
 
     // Home Dashboard Route
     Route::get('/home/dashboard', [\App\Http\Controllers\Api\CustomerApp\HomeController::class, 'dashboard']);
@@ -230,6 +235,8 @@ Route::prefix('v1/customer-app')->group(function () {
         // Profile
         Route::get('/profile', [\App\Http\Controllers\Api\CustomerApp\ProfileController::class, 'getProfile']);
         Route::put('/profile', [\App\Http\Controllers\Api\CustomerApp\ProfileController::class, 'editProfile']);
+        Route::put('/update-profile-photo', [\App\Http\Controllers\Api\CustomerApp\ProfileController::class, 'updateProfilePhoto']);
+        Route::delete('/remove-profile-photo', [\App\Http\Controllers\Api\CustomerApp\ProfileController::class, 'removeProfilePhoto']);
 
         // Addresses
         Route::get('/addresses', [\App\Http\Controllers\Api\CustomerApp\AddressController::class, 'getAddresses']);
@@ -244,9 +251,11 @@ Route::prefix('v1/customer-app')->group(function () {
         // Orders
         Route::get('/orders', [\App\Http\Controllers\Api\CustomerApp\OrderController::class, 'list']);
         Route::get('/orders/{id}', [\App\Http\Controllers\Api\CustomerApp\OrderController::class, 'details']);
+        Route::post('/orders/{id}/cancel', [\App\Http\Controllers\Api\CustomerApp\OrderController::class, 'cancel']);
 
         // Wishlist
         Route::get('/wishlist', [\App\Http\Controllers\Api\CustomerApp\WishlistController::class, 'getWishlist']);
+        Route::get('/check-product-in-wishlist', [\App\Http\Controllers\Api\CustomerApp\WishlistController::class, 'checkProductInWishlist']);
         Route::post('/wishlist/update', [\App\Http\Controllers\Api\CustomerApp\WishlistController::class, 'updateWishlist']);
 
         // Recently Viewed

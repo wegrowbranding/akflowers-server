@@ -68,4 +68,30 @@ class WishlistController extends BaseController
 
         return $this->sendResponse([], $msg);
     }
+
+    /**
+     * Check Product In Wishlist
+     */
+    public function checkProductInWishlist(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'product_id' => 'required|exists:products,id',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->errors()->first(), $validator->errors()->toArray(), 400);
+        }
+
+        $customer = $request->user('customer_api');
+        $wishlist = Wishlist::firstOrCreate(['customer_id' => $customer->id]);
+
+        $productId = $request->product_id;
+        $wishlistItem = WishlistItem::where('wishlist_id', $wishlist->id)
+            ->where('product_id', $productId)
+            ->first();
+
+        return $this->sendResponse([
+            'is_in_wishlist' => $wishlistItem !== null,
+        ], 'Wishlist checked successfully.');
+    }
 }

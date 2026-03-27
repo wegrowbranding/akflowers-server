@@ -23,9 +23,7 @@ class HomeController extends BaseController
         // Adjust condition according to database specifics e.g., show_in_menu
         $categories = Category::where('deleted', 0)
             ->where('status', 'active')
-            ->whereNull('parent_category_id') // top level categories
             ->orderBy('display_order', 'asc')
-            ->take(10)
             ->get();
 
         // Get new/recent products

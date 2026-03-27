@@ -31,21 +31,31 @@ class DeviceController extends BaseController
 
         $customer = $request->user('customer_api');
 
-        $device = CustomerDevice::updateOrCreate(
-            ['customer_id' => $customer->id, 'device_id' => $request->device_id],
-            [
-                'device_name' => $request->device_name,
-                'device_type' => $request->device_type,
-                'fcm_token' => $request->fcm_token,
-                'app_version' => $request->app_version,
-                'os_version' => $request->os_version,
-                'ip_address' => $request->ip(),
-                'user_agent' => $request->header('User-Agent'),
-                'is_active' => 1,
-                'last_login_at' => now(),
-                'last_used_at' => now(),
-            ]
-        );
+        // Check if device already exists
+        $existingDevice = CustomerDevice::where('customer_id', $customer->id)
+            ->where('device_id', $request->device_id)
+            ->first();
+
+        if ($existingDevice) {
+            // Ignore or return message
+            return $this->sendResponse($existingDevice, 'Device already registered.');
+        }
+
+        // Create new device
+        $device = CustomerDevice::create([
+            'customer_id' => $customer->id,
+            'device_id' => $request->device_id,
+            'device_name' => $request->device_name,
+            'device_type' => $request->device_type,
+            'fcm_token' => $request->fcm_token,
+            'app_version' => $request->app_version,
+            'os_version' => $request->os_version,
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->header('User-Agent'),
+            'is_active' => 1,
+            'last_login_at' => now(),
+            'last_used_at' => now(),
+        ]);
 
         return $this->sendResponse($device, 'Device registered successfully.');
     }

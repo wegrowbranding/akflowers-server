@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\BaseController;
 use App\Models\Order;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class OrderController extends BaseController
 {
@@ -47,5 +48,41 @@ class OrderController extends BaseController
         }
 
         return $this->sendResponse($order, 'Order details retrieved successfully.');
+    }
+
+    /**
+     * Request to cancel order, order only will be cancelled withing 15 mins of order placed
+     */
+
+    public function cancel($id, Request $request): JsonResponse
+    {
+        $customer = $request->user('customer_api');
+
+        $order = Order::where('id', $id)
+            ->where('customer_id', $customer->id)
+            ->first();
+
+        if (!$order) {
+            return $this->sendError('Order not found or unauthorized.', [], 404);
+        }
+
+        // Already cancelled
+        if ($order->order_status === 'cancelled') {
+            return $this->sendError('Order already cancelled.', [], 400);
+        }
+
+        // 15 minutes check
+        $createdAt = Carbon::parse($order->placed_at);
+        $now = Carbon::now();
+
+        if ($createdAt->diffInMinutes($now) > 15) {
+            return $this->sendError('Order can only be cancelled within 15 minutes.', [], 400);
+        }
+
+        // Cancel order
+        $order->order_status = 'cancelled';
+        $order->save();
+
+        return $this->sendResponse($order, 'Order cancelled successfully.');
     }
 }
