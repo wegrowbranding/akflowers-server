@@ -52,8 +52,7 @@ class AuthController extends BaseController
             'deleted' => 0,
         ]);
 
-        // Use a long TTL (30 days) for customer login from the app
-        $token = JWTAuth::setTTL(43200)->fromUser($customer);
+        $token = JWTAuth::fromUser($customer);
 
         UserSession::create([
             'user_type' => 'customer',
@@ -114,8 +113,7 @@ class AuthController extends BaseController
              return $this->sendError('Unauthorized.', ['error' => 'Account is disabled.'], 401);
         }
 
-        // Use a long TTL (30 days) for customer login from the app
-        $token = JWTAuth::setTTL(43200)->fromUser($customer);
+        $token = JWTAuth::fromUser($customer);
 
         UserSession::create([
             'user_type' => 'customer',

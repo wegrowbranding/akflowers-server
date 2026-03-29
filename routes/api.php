@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\StatusController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\BannerController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\MediaController;
 use App\Http\Controllers\Api\BranchController;
@@ -54,6 +55,18 @@ Route::prefix('v1')->group(function () {
             Route::post('/add', [ProductController::class, 'add']);
             Route::put('/{id}/edit', [ProductController::class, 'edit']);
             Route::delete('/{id}/delete', [ProductController::class, 'delete']);
+        });
+    });
+
+    // Banner Routes
+    Route::prefix('banners')->group(function () {
+        Route::get('/list', [BannerController::class, 'list']);
+
+        // Protected Routes
+        Route::middleware('auth.jwt')->group(function () {
+            Route::post('/add', [BannerController::class, 'add']);
+            Route::put('/{id}/edit', [BannerController::class, 'edit']);
+            Route::delete('/{id}/delete', [BannerController::class, 'delete']);
         });
     });
 

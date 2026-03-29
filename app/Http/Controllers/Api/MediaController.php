@@ -109,6 +109,10 @@ class MediaController extends BaseController
             'deleted' => 1
         ]);
 
+        if (Storage::disk('public')->exists($media->file_path)) {
+            Storage::disk('public')->delete($media->file_path);
+        }
+
         return $this->sendResponse([], 'Media deleted successfully.');
     }
 

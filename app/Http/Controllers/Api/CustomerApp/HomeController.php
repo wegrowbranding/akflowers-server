@@ -43,8 +43,14 @@ class HomeController extends BaseController
             ->take(10)
             ->get();
 
+        // Get active banners
+        $banners = \App\Models\Banner::with('media')
+            ->where('status', 1)
+            ->orderBy('id', 'desc')
+            ->get();
+
         return $this->sendResponse([
-            'banners' => [], // Add banner logic if you create a banners table
+            'banners' => $banners,
             'categories' => $categories,
             'recent_products' => $recentProducts,
             'featured_products' => $featuredProducts
