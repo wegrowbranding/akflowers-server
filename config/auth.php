@@ -52,6 +52,11 @@ return [
             'driver' => 'jwt',
             'provider' => 'customers',
         ],
+
+        'delivery_api' => [
+            'driver' => 'jwt',
+            'provider' => 'delivery_staff',
+        ],
     ],
 
     'providers' => [
@@ -68,6 +73,11 @@ return [
         'customers' => [
             'driver' => 'eloquent',
             'model' => \App\Models\Customer::class,
+        ],
+
+        'delivery_staff' => [
+            'driver' => 'eloquent',
+            'model' => \App\Models\BranchStaffUser::class,
         ],
     ],
 

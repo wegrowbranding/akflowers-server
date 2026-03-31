@@ -18,7 +18,8 @@ class OrderController extends BaseController
         $limit = $request->get('limit', 10);
         $customer = $request->user('customer_api');
 
-        $orders = Order::where('customer_id', $customer->id)
+        $orders = Order::with('history.assignment.deliveryStaff.staff')
+            ->where('customer_id', $customer->id)
             ->orderBy('placed_at', 'desc')
             ->paginate($limit);
 
@@ -38,7 +39,7 @@ class OrderController extends BaseController
         $customer = $request->user('customer_api');
 
         // Fetch order with related items and the specific products mapped
-        $order = Order::with(['items.product.media'])
+        $order = Order::with(['items.product.media', 'history.assignment.deliveryStaff.staff'])
             ->where('id', $id)
             ->where('customer_id', $customer->id)
             ->first();

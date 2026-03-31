@@ -21,6 +21,11 @@ use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\WishlistController;
+use App\Http\Controllers\Api\DeliveryStaffController;
+use App\Http\Controllers\Api\DeliveryAssignmentController;
+use App\Http\Controllers\Api\DeliveryStatusHistoryController;
+use App\Http\Controllers\Api\DeliveryProofController;
+use App\Http\Controllers\Api\DeliveryTrackingController;
 
 Route::prefix('v1')->group(function () {
     Route::get('/status', [StatusController::class, 'index']);
@@ -209,6 +214,42 @@ Route::prefix('v1')->group(function () {
         });
     });
 
+    // Delivery Staff Routes
+    Route::prefix('delivery-staff')->group(function () {
+        Route::get('/list', [DeliveryStaffController::class, 'list']);
+        Route::middleware('auth.jwt')->group(function () {
+            Route::post('/add', [DeliveryStaffController::class, 'add']);
+            Route::put('/{id}/edit', [DeliveryStaffController::class, 'edit']);
+            Route::delete('/{id}/delete', [DeliveryStaffController::class, 'delete']);
+        });
+    });
+
+    // Delivery Assignment Routes
+    Route::prefix('delivery-assignments')->group(function () {
+        Route::get('/list', [DeliveryAssignmentController::class, 'list']);
+        Route::middleware('auth.jwt')->group(function () {
+            Route::post('/add', [DeliveryAssignmentController::class, 'add']);
+            Route::put('/{id}/edit', [DeliveryAssignmentController::class, 'edit']);
+            Route::delete('/{id}/delete', [DeliveryAssignmentController::class, 'delete']);
+        });
+    });
+
+    // Delivery Status Histories Routes
+    Route::prefix('delivery-status-histories')->group(function () {
+        Route::get('/list', [DeliveryStatusHistoryController::class, 'list']);
+    });
+
+    // Delivery Proofs Routes
+    Route::prefix('delivery-proofs')->group(function () {
+        Route::get('/list', [DeliveryProofController::class, 'list']);
+    });
+
+    // Delivery Tracking Routes
+    Route::prefix('delivery-tracking')->group(function () {
+        Route::get('/{assignment_id}/get', [DeliveryTrackingController::class, 'get']);
+        Route::get('/list', [DeliveryTrackingController::class, 'list']);
+    });
+
     Route::middleware('auth.jwt')->get('/user', function (Request $request) {
         return $request->user();
     });
@@ -243,6 +284,7 @@ Route::prefix('v1/customer-app')->group(function () {
     Route::middleware('auth.customer')->group(function () {
         // Cart Routes
         Route::get('/cart', [\App\Http\Controllers\Api\CustomerApp\CartController::class, 'getCart']);
+        // Remove individual item or update quantity
         Route::post('/cart/update', [\App\Http\Controllers\Api\CustomerApp\CartController::class, 'updateCart']);
 
         // Profile
@@ -289,5 +331,26 @@ Route::prefix('v1/customer-app')->group(function () {
         Route::post('/notifications/add', [\App\Http\Controllers\Api\CustomerApp\NotificationController::class, 'add']);
         Route::post('/notifications/mark-read', [\App\Http\Controllers\Api\CustomerApp\NotificationController::class, 'markRead']);
         Route::get('/notifications/unread-count', [\App\Http\Controllers\Api\CustomerApp\NotificationController::class, 'unreadCount']);
+    });
+});
+
+Route::prefix('v1/delivery-app')->group(function () {
+    // Auth Routes
+    Route::post('/login', [\App\Http\Controllers\Api\DeliveryApp\AuthController::class, 'login']);
+
+    // Protected Routes
+    Route::middleware('auth.delivery')->group(function () {
+        // Home/Dashboard
+        Route::get('/dashboard', [\App\Http\Controllers\Api\DeliveryApp\HomeController::class, 'dashboard']);
+        Route::post('/update-availability', [\App\Http\Controllers\Api\DeliveryApp\HomeController::class, 'updateAvailability']);
+        Route::post('/update-order-status', [\App\Http\Controllers\Api\DeliveryApp\HomeController::class, 'updateOrderStatus']);
+        Route::post('/confirm-delivery-photo', [\App\Http\Controllers\Api\DeliveryApp\HomeController::class, 'confirmDeliveryWithPhoto']);
+
+        // Orders
+        Route::get('/orders/{id}', [\App\Http\Controllers\Api\DeliveryApp\OrderController::class, 'details']);
+        Route::get('/order-history', [\App\Http\Controllers\Api\DeliveryApp\OrderController::class, 'orderHistory']);
+
+        // Tracking
+        Route::post('/update-tracking', [\App\Http\Controllers\Api\DeliveryApp\TrackingController::class, 'updateTracking']);
     });
 });

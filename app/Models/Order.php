@@ -34,4 +34,25 @@ class Order extends Model
     {
         return $this->belongsTo(Customer::class, 'customer_id');
     }
+
+    public function customerAddress()
+    {
+        return $this->belongsTo(CustomerAddress::class, 'address_id');
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class, 'branch_id');
+    }
+
+    public function deliveryAssignments()
+    {
+        return $this->hasMany(DeliveryAssignment::class, 'order_id');
+    }
+
+    public function history()
+    {
+        return $this->hasManyThrough(DeliveryStatusHistory::class, DeliveryAssignment::class, 'order_id', 'assignment_id')
+            ->orderBy('id', 'desc');
+    }
 }
