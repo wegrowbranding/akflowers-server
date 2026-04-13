@@ -20,6 +20,12 @@ class OrderController extends BaseController
         if ($search) {
             $query->where('order_number', 'LIKE', "%{$search}%");
         }
+
+        if ($request->has('unassigned_only')) {
+            $query->whereDoesntHave('deliveryAssignments', function($q) {
+                $q->where('status', '!=', 'rejected');
+            });
+        }
         
         $orders = $query->paginate($limit);
 

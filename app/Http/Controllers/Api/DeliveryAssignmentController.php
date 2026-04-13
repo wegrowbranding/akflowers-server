@@ -37,24 +37,31 @@ class DeliveryAssignmentController extends BaseController
             'order_id' => 'required|exists:orders,id',
             'delivery_staff_id' => 'required|exists:delivery_staff,id',
             'assigned_at' => 'nullable|date',
-            'status' => 'nullable|in:assigned,accepted,picked_up,out_for_delivery,delivered,failed',
+            'status' => 'nullable|in:assigned,accepted,picked_up,out_for_delivery,delivered,rejected',
         ]);
 
         if ($validator->fails()) {
             return $this->sendError('Validation error', $validator->errors()->toArray(), 422);
         }
 
-        $assignment = DeliveryAssignment::create($request->all());
+        $assignment = DeliveryAssignment::updateOrCreate(
+            ['order_id' => $request->order_id],
+            [
+                'delivery_staff_id' => $request->delivery_staff_id,
+                'assigned_at' => $request->assigned_at ?? now(),
+                'status' => $request->status ?? 'assigned',
+            ]
+        );
 
-        // Create status history for initial assignment
+        // Create status history for initial assignment/reassignment
         DeliveryStatusHistory::create([
             'assignment_id' => $assignment->id,
             'status' => $assignment->status ?? 'assigned',
-            'remarks' => 'Order assigned to staff',
+            'remarks' => 'Order assigned to staff (Updated)',
             'created_at' => now(),
         ]);
 
-        return $this->sendResponse($assignment, 'Delivery assignment added successfully.');
+        return $this->sendResponse($assignment, 'Delivery assignment handled successfully.');
     }
 
     public function edit(Request $request, $id): JsonResponse
@@ -70,7 +77,7 @@ class DeliveryAssignmentController extends BaseController
             'order_id' => 'exists:orders,id',
             'delivery_staff_id' => 'exists:delivery_staff,id',
             'assigned_at' => 'nullable|date',
-            'status' => 'nullable|in:assigned,accepted,picked_up,out_for_delivery,delivered,failed',
+            'status' => 'nullable|in:assigned,accepted,picked_up,out_for_delivery,delivered,rejected',
         ]);
 
         if ($validator->fails()) {

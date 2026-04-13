@@ -109,6 +109,9 @@ class ProfileController extends BaseController
         finfo_close($f);
 
         $fileSize = strlen($imageData);
+        if ($fileSize > 1024 * 1024) {
+            return $this->sendError('The profile photo exceeds the 1MB size limit.', [], 400);
+        }
 
         // Create media
         $media = Media::create([

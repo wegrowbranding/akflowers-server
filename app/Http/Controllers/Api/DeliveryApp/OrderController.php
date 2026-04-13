@@ -32,6 +32,7 @@ class OrderController extends BaseController
 
         $assignment = DeliveryAssignment::where('order_id', $order_id)
             ->where('delivery_staff_id', $deliveryStaff->id)
+            ->where('status', '!=', 'rejected')
             ->first();
 
         if (!$assignment) {
@@ -72,6 +73,9 @@ class OrderController extends BaseController
         // Apply filter if provided
         if ($status && in_array($status, ['delivered', 'failed'])) {
             $assignmentsQuery->where('status', $status);
+        } else {
+            // Exclude rejected by default for overall history
+            $assignmentsQuery->where('status', '!=', 'rejected');
         }
 
         // Latest first

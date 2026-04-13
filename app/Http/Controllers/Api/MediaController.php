@@ -23,7 +23,7 @@ class MediaController extends BaseController
     public function upload(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'file' => 'required|file|max:10240', // 10MB max
+            'file' => 'required|file|max:1024', // 1MB max
             'file_name' => 'nullable|string|max:255',
         ]);
 

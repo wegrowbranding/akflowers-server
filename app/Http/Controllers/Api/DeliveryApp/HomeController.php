@@ -28,36 +28,54 @@ class HomeController extends BaseController
         }
 
         $assignedCount = DeliveryAssignment::where('delivery_staff_id', $deliveryStaff->id)->where('status', 'assigned')->count();
+        $acceptedCount = DeliveryAssignment::where('delivery_staff_id', $deliveryStaff->id)->where('status', 'accepted')->count();
+        $pickedUpCount = DeliveryAssignment::where('delivery_staff_id', $deliveryStaff->id)->where('status', 'picked_up')->count();
         $outForDeliveryCount = DeliveryAssignment::where('delivery_staff_id', $deliveryStaff->id)->where('status', 'out_for_delivery')->count();
+        $rejectedCount = DeliveryAssignment::where('delivery_staff_id', $deliveryStaff->id)->where('status', 'rejected')->count();
         $deliveredTodayCount = DeliveryAssignment::where('delivery_staff_id', $deliveryStaff->id)
             ->where('status', 'delivered')
             ->whereDate('updated_at', now()->toDateString())
             ->count();
 
-        $newOrders = DeliveryAssignment::where('delivery_staff_id', $deliveryStaff->id)
+        $baseQuery = DeliveryAssignment::where('delivery_staff_id', $deliveryStaff->id);
+
+        $newOrders = (clone $baseQuery)
             ->where('status', 'assigned')
             ->with(['order.items', 'order.customer'])
-            ->get();
-        
-        $acceptedOrders = DeliveryAssignment::where('delivery_staff_id', $deliveryStaff->id)
-            ->where('status', 'accepted')
-            ->with(['order.items', 'order.customer'])
+            ->orderByDesc('created_at')
             ->get();
 
-        $outForDeliveryOrders = DeliveryAssignment::where('delivery_staff_id', $deliveryStaff->id)
+        $acceptedOrders = (clone $baseQuery)
+            ->where('status', 'accepted')
+            ->with(['order.items', 'order.customer'])
+            ->orderByDesc('updated_at')
+            ->get();
+
+        $pickedUpOrders = (clone $baseQuery)
+            ->where('status', 'picked_up')
+            ->with(['order.items', 'order.customer'])
+            ->orderByDesc('updated_at')
+            ->get();
+
+        $outForDeliveryOrders = (clone $baseQuery)
             ->where('status', 'out_for_delivery')
             ->with(['order.items', 'order.customer'])
+            ->orderByDesc('updated_at')
             ->get();
 
         return $this->sendResponse([
             'counts' => [
                 'assigned' => $assignedCount,
+                'accepted' => $acceptedCount,
+                'picked_up' =>$pickedUpCount,
                 'out_for_delivery' => $outForDeliveryCount,
+                'rejected' => $rejectedCount,
                 'delivered_today' => $deliveredTodayCount,
             ],
             'listings' => [
                 'new_orders' => $newOrders,
                 'accepted' => $acceptedOrders,
+                'picked_up' => $pickedUpOrders,
                 'out_for_delivery' => $outForDeliveryOrders,
             ],
             'is_available' => $deliveryStaff->is_available,
@@ -101,7 +119,7 @@ class HomeController extends BaseController
 
         $validator = Validator::make($request->all(), [
             'assignment_id' => 'required|exists:delivery_assignments,id',
-            'status' => 'required|in:accepted,picked_up,out_for_delivery,delivered,failed',
+            'status' => 'required|in:accepted,picked_up,out_for_delivery,delivered,rejected',
             'remarks' => 'nullable|string',
         ]);
 
@@ -111,6 +129,7 @@ class HomeController extends BaseController
 
         $assignment = DeliveryAssignment::where('id', $request->assignment_id)
             ->where('delivery_staff_id', $deliveryStaff->id)
+            ->where('status', '!=', 'rejected')
             ->first();
 
         if (!$assignment) {
@@ -124,7 +143,7 @@ class HomeController extends BaseController
             'picked_up'        => 'shipped',
             'out_for_delivery' => 'shipped',
             'delivered'        => 'delivered',
-            'failed'           => 'shipped', // or keep as shipped
+            'rejected'           => 'shipped', // or keep as shipped
         ];
 
         if (isset($orderStatusMap[$request->status])) {
@@ -197,6 +216,9 @@ class HomeController extends BaseController
         finfo_close($f);
 
         $fileSize = strlen($imageData);
+        if ($fileSize > 1024 * 1024) {
+            return $this->sendError('The delivery proof photo exceeds the 1MB size limit.', [], 400);
+        }
 
         // Update status to delivered
         $assignment->update(['status' => 'delivered']);
